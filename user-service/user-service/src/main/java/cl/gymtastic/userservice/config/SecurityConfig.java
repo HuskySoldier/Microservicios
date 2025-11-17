@@ -1,0 +1,50 @@
+package cl.gymtastic.userservice.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    // Define el encriptador de contraseñas (BCrypt) para ser inyectado
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    // Configura los permisos de acceso
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable()) // Deshabilita CSRF
+            .authorizeHttpRequests(auth -> auth
+                // Permite acceso público a Swagger
+                .requestMatchers(
+                    "/users/swagger-ui.html", 
+                    "/users/swagger-ui/**", 
+                    "/users/api-docs", 
+                    "/users/api-docs/**"
+                ).permitAll()
+                // Permite acceso público a los endpoints de la API
+                .requestMatchers(
+                    "/register", 
+                    "/login", 
+                    "/users/**" // Permite /users/{email}, /users/by-email, etc.
+                ).permitAll()
+                // El resto de peticiones requerirían autenticación
+                .anyRequest().authenticated() 
+            );
+        
+        // Como aún no implementamos tokens JWT, permitimos todo temporalmente
+        // (Borra esta línea cuando implementes JWT/OAuth2)
+        http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+
+        return http.build();
+    }
+}
