@@ -55,6 +55,7 @@ public class UserService {
         User user = userOpt.get();
         if (passwordEncoder.matches(request.getPassword().trim(), user.getPassHash())) {
             UserProfileResponse userDto = new UserProfileResponse(user);
+            userDto.setPassHash(null);
             return new LoginResponse(
                 true, 
                 "fake-jwt-token-" + email,

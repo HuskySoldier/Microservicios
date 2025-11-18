@@ -21,6 +21,7 @@ public class UserProfileResponse {
     private String avatarUri;
     private String fono;
     private String bio;
+    private String passHash;
 
     // Constructor para mapear fácil desde la Entidad User
     public UserProfileResponse(User user) {
@@ -35,5 +36,6 @@ public class UserProfileResponse {
         this.avatarUri = user.getAvatarUri();
         this.fono = user.getFono();
         this.bio = user.getBio();
+        this.passHash = user.getPassHash();
     }
 }
