@@ -1,9 +1,7 @@
 package cl.gymtastic.userservice.controller;
 
-import cl.gymtastic.userservice.dto.LoginRequest;
-import cl.gymtastic.userservice.dto.LoginResponse;
-import cl.gymtastic.userservice.dto.RegisterRequest;
-import cl.gymtastic.userservice.dto.UserProfileResponse;
+// --- Importar los nuevos DTOs y List/stream ---
+import cl.gymtastic.userservice.dto.*;
 import cl.gymtastic.userservice.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -15,22 +13,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map; // Para el mensaje simple
+import java.util.List; // <-- Importar List
+import java.util.Map;
+import java.util.stream.Collectors; // <-- Importar Collectors
 
 @RestController
-@CrossOrigin // Permite CORS
+@CrossOrigin
 @Tag(name = "User & Auth Service", description = "Endpoints para Registro, Login y Perfiles")
 public class UserController {
 
     @Autowired
     private UserService userService;
 
-    // --- MICROSERVICIO 1: REGISTER ---
+    // --- (Existente) MICROSERVICIO 1: REGISTER ---
     @Operation(summary = "Registrar un nuevo usuario")
-    @ApiResponse(responseCode = "201", description = "Usuario creado")
-    @ApiResponse(responseCode = "400", description = "Email ya existe o datos inválidos")
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+        // ... (código existente sin cambios)
         try {
             userService.register(request);
             return ResponseEntity.status(201).body(Map.of("message", "Usuario creado exitosamente"));
@@ -39,12 +38,11 @@ public class UserController {
         }
     }
 
-    // --- MICROSERVICIO 2: LOGIN ---
+    // --- (Existente) MICROSERVICIO 2: LOGIN ---
     @Operation(summary = "Autenticar un usuario")
-    @ApiResponse(responseCode = "200", description = "Login exitoso", content = @Content(schema = @Schema(implementation = LoginResponse.class)))
-    @ApiResponse(responseCode = "401", description = "Credenciales inválidas", content = @Content(schema = @Schema(implementation = LoginResponse.class)))
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        // ... (código existente sin cambios)
         LoginResponse response = userService.login(request);
         if (response.isSuccess()) {
             return ResponseEntity.ok(response);
@@ -53,17 +51,73 @@ public class UserController {
         }
     }
 
-    // --- MICROSERVICIO 3: GET USER PROFILE ---
-    @Operation(summary = "Obtener perfil de usuario por Email")
-    @ApiResponse(responseCode = "200", description = "Perfil encontrado", content = @Content(schema = @Schema(implementation = UserProfileResponse.class)))
-    @ApiResponse(responseCode = "404", description = "Usuario no encontrado", content = @Content)
+    // --- (Existente) MICROSERVICIO 3: GET USER PROFILE ---
+    @Operation(summary = "Obtener perfil de usuario por Email (PathVariable)")
     @GetMapping("/users/{email}")
     public ResponseEntity<UserProfileResponse> getUserProfile(@PathVariable String email) {
         return userService.getUserByEmail(email)
-                .map(user -> ResponseEntity.ok(new UserProfileResponse(user))) // Mapea Entidad a DTO
+                .map(user -> ResponseEntity.ok(new UserProfileResponse(user))) 
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // (Aquí irían los endpoints PUT/POST para actualizar perfil que llamen al UserService)
-    // Ej: @PutMapping("/users/{email}/profile") ...
+    // --- ¡FIX IMPORTANTE! Endpoint para loginservice ---
+    // loginservice busca este endpoint:
+    @Operation(summary = "Obtener perfil de usuario por Email (RequestParam)")
+    @GetMapping("/users/by-email")
+    public ResponseEntity<UserProfileResponse> getUserProfileByRequestParam(@RequestParam String email) {
+        return userService.getUserByEmail(email)
+                // ¡IMPORTANTE! El loginservice espera el hash de la contraseña.
+                // Usamos la entidad User directamente aquí, no el DTO
+                .map(user -> ResponseEntity.ok(new UserProfileResponse(user))) 
+                .orElse(ResponseEntity.notFound().build());
+    }
+    
+    // --- AÑADIDO: (Admin) Listar todos los usuarios ---
+    @Operation(summary = "Listar todos los usuarios (Admin)")
+    @GetMapping("/users")
+    public ResponseEntity<List<UserProfileResponse>> getAllUsers() {
+        List<UserProfileResponse> userProfiles = userService.getAllUsers()
+                .stream()
+                .map(UserProfileResponse::new) // Mapea a DTO para no exponer el hash
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(userProfiles);
+    }
+
+    // --- AÑADIDO: (Admin) Eliminar un usuario ---
+    @Operation(summary = "Eliminar un usuario (Admin)")
+    @DeleteMapping("/users/{email}")
+    public ResponseEntity<?> deleteUser(@PathVariable String email) {
+        if (userService.deleteUser(email)) {
+            return ResponseEntity.noContent().build(); // 204 No Content
+        } else {
+            return ResponseEntity.notFound().build(); // 404 Not Found
+        }
+    }
+
+    // --- AÑADIDO: (Admin) Actualizar rol de un usuario ---
+    @Operation(summary = "Actualizar el rol de un usuario (Admin)")
+    @PutMapping("/users/{email}/role")
+    public ResponseEntity<UserProfileResponse> updateUserRole(@PathVariable String email, @Valid @RequestBody AdminRoleUpdateRequest request) {
+        return userService.updateUserRole(email, request)
+                .map(user -> ResponseEntity.ok(new UserProfileResponse(user)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // --- AÑADIDO: (Perfil) Actualizar perfil del propio usuario ---
+    @Operation(summary = "Actualizar el perfil de un usuario (nombre, fono, bio, avatar)")
+    @PutMapping("/users/{email}/profile")
+    public ResponseEntity<UserProfileResponse> updateProfile(@PathVariable String email, @Valid @RequestBody ProfileUpdateRequest request) {
+        return userService.updateProfile(email, request)
+                .map(profile -> ResponseEntity.ok(profile))
+                .orElse(ResponseEntity.notFound().build());
+    }
+    
+    // --- AÑADIDO: (Checkout) Actualizar suscripción ---
+    @Operation(summary = "Actualizar la suscripción de un usuario (Checkout Service)")
+    @PutMapping("/users/{email}/subscription")
+    public ResponseEntity<UserProfileResponse> updateSubscription(@PathVariable String email, @Valid @RequestBody SubscriptionUpdateRequest request) {
+        return userService.updateSubscription(email, request)
+                .map(profile -> ResponseEntity.ok(profile))
+                .orElse(ResponseEntity.notFound().build());
+    }
 }
