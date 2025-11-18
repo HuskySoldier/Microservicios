@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "RegisterServiceApplication",
+            "request": "launch",
+            "mainClass": "cl.gymtastic.registerservice.RegisterServiceApplication",
+            "projectName": ""
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-LoginserviceApplication<cl.gymtastic-loginservice>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "cl.gymtastic.loginservice.LoginserviceApplication",
+            "projectName": "cl.gymtastic-loginservice",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
