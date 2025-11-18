@@ -1,82 +1,79 @@
 package cl.gymtastic.product_service.controller;
 
+// ... (Importaciones existentes)
+import cl.gymtastic.product_service.dto.StockDecreaseRequest; // <-- Importar
 import cl.gymtastic.product_service.model.Product;
+import cl.gymtastic.product_service.service.InsufficientStockException; // <-- Importar
 import cl.gymtastic.product_service.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus; // <-- Importar
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map; // <-- Importar Map
 
 @RestController
-@RequestMapping("/products") // Ruta base para productos
-@Tag(name = "Product Service", description = "Endpoints para gestionar productos y planes")
-@CrossOrigin // Permite llamadas desde tu app móvil
+@RequestMapping("/products")
+// ... (Anotaciones existentes)
 public class ProductController {
 
     @Autowired
     private ProductService productService;
 
-    // === GET (Leer Todos) ===
-    @Operation(summary = "Obtener todos los productos y planes")
-    @ApiResponse(responseCode = "200", description = "Lista de productos")
-    @ApiResponse(responseCode = "204", description = "No hay productos")
+    // ... (Endpoints existentes: GET, GET/{tipo}, POST, PUT, DELETE) ...
     @GetMapping
-    public ResponseEntity<List<Product>> getAllProducts() {
+    public ResponseEntity<List<Product>> getAllProducts() { // ... (existente)
         List<Product> products = productService.getAllProducts();
         if (products.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(products);
     }
-
-    // === GET (Leer por Tipo) ===
-    @Operation(summary = "Obtener productos filtrados por tipo (plan o merch)")
-    @ApiResponse(responseCode = "200", description = "Lista de productos filtrada")
-    @ApiResponse(responseCode = "204", description = "No hay productos de ese tipo")
     @GetMapping("/{tipo}")
-    public ResponseEntity<List<Product>> getProductsByType(@PathVariable String tipo) {
+    public ResponseEntity<List<Product>> getProductsByType(@PathVariable String tipo) { // ... (existente)
         List<Product> products = productService.getProductsByType(tipo);
         if (products.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(products);
     }
-
-    // --- AÑADIDO: POST (Crear) ---
-    @Operation(summary = "Crear un nuevo producto (Admin)")
-    @ApiResponse(responseCode = "201", description = "Producto creado")
     @PostMapping
-    public ResponseEntity<Product> createProduct(@RequestBody Product product) {
+    public ResponseEntity<Product> createProduct(@RequestBody Product product) { // ... (existente)
         Product newProduct = productService.createProduct(product);
-        return new ResponseEntity<>(newProduct, HttpStatus.CREATED); // Devuelve 201 Created
+        return new ResponseEntity<>(newProduct, HttpStatus.CREATED);
     }
-
-    // --- AÑADIDO: PUT (Actualizar) ---
-    @Operation(summary = "Actualizar un producto existente (Admin)")
-    @ApiResponse(responseCode = "200", description = "Producto actualizado")
-    @ApiResponse(responseCode = "404", description = "Producto no encontrado")
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable Integer id, @RequestBody Product productDetails) {
+    public ResponseEntity<Product> updateProduct(@PathVariable Integer id, @RequestBody Product productDetails) { // ... (existente)
         return productService.updateProduct(id, productDetails)
-                .map(updatedProduct -> ResponseEntity.ok(updatedProduct)) // Devuelve 200 OK
-                .orElse(ResponseEntity.notFound().build()); // Devuelve 404 Not Found
+                .map(updatedProduct -> ResponseEntity.ok(updatedProduct))
+                .orElse(ResponseEntity.notFound().build());
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteProduct(@PathVariable Integer id) { // ... (existente)
+        if (productService.deleteProduct(id)) {
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    // --- AÑADIDO: DELETE (Eliminar) ---
-    @Operation(summary = "Eliminar un producto (Admin)")
-    @ApiResponse(responseCode = "204", description = "Producto eliminado")
-    @ApiResponse(responseCode = "404", description = "Producto no encontrado")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteProduct(@PathVariable Integer id) {
-        if (productService.deleteProduct(id)) {
-            return ResponseEntity.noContent().build(); // Devuelve 204 No Content
-        } else {
-            return ResponseEntity.notFound().build(); // Devuelve 404 Not Found
+
+    // --- AÑADIDO: Endpoint para descontar stock ---
+    @Operation(summary = "Descontar stock de productos (Checkout)")
+    @ApiResponse(responseCode = "200", description = "Stock descontado")
+    @ApiResponse(responseCode = "409", description = "Stock insuficiente")
+    @PostMapping("/decrement-stock")
+    public ResponseEntity<?> decreaseStock(@RequestBody StockDecreaseRequest request) {
+        try {
+            productService.decreaseStock(request);
+            return ResponseEntity.ok(Map.of("message", "Stock descontado exitosamente"));
+        } catch (InsufficientStockException e) {
+            // 409 Conflict es apropiado para "stock insuficiente"
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));
         }
     }
 }
