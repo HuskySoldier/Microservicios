@@ -8,19 +8,19 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.5</version>
+        <version>3.5.7</version>
         <relativePath/>
     </parent>
 
     <groupId>cl.gymtastic</groupId>
-    <artifactId>product-service</artifactId>
+    <artifactId>user-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>product-service</name>
+    <name>user-service</name>
     <description>Microservicio para gestionar Productos y Planes de GymTastic</description>
 
     <properties>
         <java.version>21</java.version>
-        <spring-cloud.version>2023.0.1</spring-cloud.version>
+        <spring-cloud.version>2025.0.0</spring-cloud.version>
     </properties>
 
     <dependencyManagement>

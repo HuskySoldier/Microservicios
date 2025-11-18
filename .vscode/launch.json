@@ -22,6 +22,37 @@
             "mainClass": "cl.gymtastic.loginservice.LoginserviceApplication",
             "projectName": "cl.gymtastic-loginservice",
             "args": "",
+            "envFile": "${workspaceFolder}/.env",
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=64833 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=cl.gymtastic-loginservice"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-ProductServiceApplication<cl.gymtastic-product-service>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "cl.gymtastic.product_service.ProductServiceApplication",
+            "projectName": "cl.gymtastic-product-service",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-UserServiceApplication<product-service>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "cl.gymtastic.userservice.UserServiceApplication",
+            "projectName": "product-service",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-RegisterserviceApplication<registerservice>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "cl.gymtastic.registerservice.RegisterserviceApplication",
+            "projectName": "registerservice",
+            "args": "",
             "envFile": "${workspaceFolder}/.env"
         }
     ]

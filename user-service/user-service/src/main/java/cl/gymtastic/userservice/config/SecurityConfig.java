@@ -37,13 +37,18 @@ public class SecurityConfig {
                     "/login", 
                     "/users/**" // Permite /users/{email}, /users/by-email, etc.
                 ).permitAll()
-                // El resto de peticiones requerirían autenticación
-                .anyRequest().authenticated() 
+                
+                // CORRECCIÓN: 
+                // Como aún no implementamos tokens JWT, permitimos todo temporalmente
+                // (Borra esta línea cuando implementes JWT/OAuth2 y descomenta la de abajo)
+                .anyRequest().permitAll() 
+                
+                // (La regla original era: .anyRequest().authenticated())
             );
         
-        // Como aún no implementamos tokens JWT, permitimos todo temporalmente
-        // (Borra esta línea cuando implementes JWT/OAuth2)
-        http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+        // BORRADO: 
+        // Se eliminó la segunda llamada a http.authorizeHttpRequests(...) 
+        // que causaba el conflicto.
 
         return http.build();
     }
