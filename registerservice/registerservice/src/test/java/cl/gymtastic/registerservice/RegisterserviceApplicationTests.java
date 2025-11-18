@@ -1,10 +1,10 @@
-package cl.gymtastic.register_service;
+package cl.gymtastic.registerservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class RegisterServiceApplicationTests {
+class RegisterserviceApplicationTests {
 
 	@Test
 	void contextLoads() {

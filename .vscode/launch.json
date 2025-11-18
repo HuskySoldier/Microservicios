@@ -4,6 +4,13 @@
             "type": "java",
             "name": "RegisterServiceApplication",
             "request": "launch",
+            "mainClass": "cl.gymtastic.register_service.RegisterServiceApplication",
+            "projectName": ""
+        },
+        {
+            "type": "java",
+            "name": "RegisterServiceApplication",
+            "request": "launch",
             "mainClass": "cl.gymtastic.registerservice.RegisterServiceApplication",
             "projectName": ""
         },

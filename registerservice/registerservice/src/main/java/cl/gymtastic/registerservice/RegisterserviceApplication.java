@@ -7,8 +7,8 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 @EnableFeignClients
-public class RegisterServiceApplication {
+public class RegisterserviceApplication {
     public static void main(String[] args) {
-        SpringApplication.run(RegisterServiceApplication.class, args);
+        SpringApplication.run(RegisterserviceApplication.class, args);
     }
 }
