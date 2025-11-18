@@ -13,7 +13,6 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import cl.gymtastic.loginservice.dto.ResetPasswordRequest;
 
 @RestController
 @RequestMapping("/login") // Ruta base
