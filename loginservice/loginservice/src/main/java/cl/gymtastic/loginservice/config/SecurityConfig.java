@@ -35,11 +35,18 @@ public class SecurityConfig {
                 ).permitAll()
                 // Permite acceso público al endpoint de login
                 .requestMatchers("/login").permitAll()
-                .anyRequest().authenticated()
+                
+                // CORRECCIÓN: 
+                // Permitimos todo temporalmente para pruebas
+                // (Borra esta línea cuando implementes JWT/OAuth2 y descomenta la de abajo)
+                .anyRequest().permitAll()
+                
+                // (La regla original era: .anyRequest().authenticated())
             );
         
-        // Permitimos todo temporalmente para pruebas
-        http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+        // BORRADO: 
+        // Se eliminó la segunda llamada a http.authorizeHttpRequests(...) 
+        // que causaba el conflicto.
 
         return http.build();
     }

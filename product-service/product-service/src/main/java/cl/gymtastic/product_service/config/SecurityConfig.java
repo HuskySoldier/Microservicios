@@ -23,12 +23,18 @@ public class SecurityConfig {
                     "/products/api-docs", 
                     "/products/api-docs/**"
                 ).permitAll() 
-                .anyRequest().authenticated()
+                
+                // CORRECCIÓN: 
+                // Como aún no implementamos tokens, permitimos todo temporalmente
+                // (Borra esta línea cuando implementes JWT/OAuth2 y descomenta la de abajo)
+                .anyRequest().permitAll()
+                
+                // (La regla original era: .anyRequest().authenticated())
             );
         
-        // Como aún no implementamos tokens, permitimos todo temporalmente
-        // (Borra esta línea cuando implementes JWT/OAuth2)
-        http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+        // BORRADO: 
+        // Se eliminó la segunda llamada a http.authorizeHttpRequests(...) 
+        // que causaba el conflicto.
 
         return http.build();
     }
