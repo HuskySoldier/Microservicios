@@ -8,16 +8,13 @@ import feign.FeignException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -109,6 +106,7 @@ public class CheckoutServiceTest {
 
         // Mock: Descuento de stock falla con FeignException (simulando HTTP 409)
         // Construimos un Response simulado y usamos FeignException.errorStatus(...) para crear la excepción
+        @SuppressWarnings("deprecation")
         feign.Request fakeRequest = feign.Request.create(feign.Request.HttpMethod.POST, "/", Collections.emptyMap(), new byte[0], null);
         feign.Response fakeResponse = feign.Response.builder()
             .status(409)

@@ -5,7 +5,7 @@ import cl.gymtastic.attendanceservice.repository.AttendanceRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
+// [LINEA ELIMINADA] import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -40,6 +40,7 @@ public class AttendanceServiceTest {
     // --- PRUEBAS DE CHECK-IN ---
 
     @Test
+    @SuppressWarnings("null") // <-- CORRECCIÓN: Suprime las advertencias de nulidad en la asignación del resultado
     void checkIn_Success_NewSession() {
         // Arrange: Simula que no hay sesión abierta
         when(repository.findLastOpen(TEST_EMAIL)).thenReturn(Optional.empty());
@@ -56,6 +57,7 @@ public class AttendanceServiceTest {
     }
 
     @Test
+    @SuppressWarnings("null") // <-- CORRECCIÓN: Suprime las advertencias de nulidad en la asignación del resultado
     void checkIn_AlreadyOpen() {
         // Arrange: Simula que ya hay una sesión abierta
         when(repository.findLastOpen(TEST_EMAIL)).thenReturn(Optional.of(openAttendance));
@@ -73,6 +75,7 @@ public class AttendanceServiceTest {
     // --- PRUEBAS DE CHECK-OUT ---
 
     @Test
+    @SuppressWarnings("null") // <-- CORRECCIÓN: Suprime las advertencias de nulidad en la asignación del resultado
     void checkOut_Success() {
         // Arrange: Encuentra la sesión abierta
         when(repository.findLastOpen(TEST_EMAIL)).thenReturn(Optional.of(openAttendance));
@@ -89,6 +92,7 @@ public class AttendanceServiceTest {
         verify(repository, times(1)).save(openAttendance);
     }
 
+    @SuppressWarnings("null")
     @Test
     void checkOut_Failure_NoOpenSession() {
         // Arrange: No hay sesión abierta

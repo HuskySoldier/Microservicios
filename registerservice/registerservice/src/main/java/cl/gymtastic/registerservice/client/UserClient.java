@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity; // Importar ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping;
 
-@FeignClient(name = "user-service", url = "${user.service.url}")
+@FeignClient(name = "user-service", url = "${user-service.url}")
 public interface UserClient {
 
     @PostMapping("/register") // <-- CORREGIDO: Endpoint es '/register'

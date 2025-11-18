@@ -50,6 +50,7 @@ public class UserServiceTest {
     // --- PRUEBAS DE REGISTRO ---
 
     @Test
+    @SuppressWarnings("null") // <-- CORRECCIÓN: Suprime advertencias de nulidad (Línea 63)
     void register_Success() {
         // Prepara la solicitud
         RegisterRequest request = new RegisterRequest();
@@ -72,6 +73,7 @@ public class UserServiceTest {
     }
 
     @Test
+    @SuppressWarnings("null") // <-- CORRECCIÓN: Suprime advertencias de nulidad (Línea 71)
     void register_Failure_EmailExists() {
         // Prepara la solicitud
         RegisterRequest request = new RegisterRequest();
@@ -129,6 +131,7 @@ public class UserServiceTest {
     // --- PRUEBAS DE ACTUALIZACIÓN DE PERFIL ---
 
     @Test
+    @SuppressWarnings("null") // <-- CORRECCIÓN: Suprime advertencias de nulidad (Líneas 140, 150)
     void updateProfile_Success() {
         ProfileUpdateRequest request = new ProfileUpdateRequest();
         request.setNombre("Nuevo Nombre");

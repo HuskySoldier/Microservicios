@@ -10,8 +10,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import java.util.List; // <-- Importar List
+import java.util.List; 
 import java.util.Optional;
+import java.util.Objects; // <-- AÑADIDO: Para chequeos de nulidad en el servicio
 
 @Service
 @Validated
@@ -26,17 +27,22 @@ public class UserService {
     /**
      * Microservicio 1: REGISTER
      */
+    @SuppressWarnings("null")
     public User register(@Valid RegisterRequest request) {
-        // ... (código existente sin cambios)
-        String normalizedEmail = request.getEmail().trim().toLowerCase();
+        // CORRECCIÓN: Usamos Objects.requireNonNull() para asegurar que el valor 
+        // existe antes de llamar a trim(), satisfaciendo el análisis estático.
+        String normalizedEmail = Objects.requireNonNull(request.getEmail()).trim().toLowerCase();
+        
         if (userRepository.existsById(normalizedEmail)) {
             throw new RuntimeException("El email ya existe");
         }
-        String passHash = passwordEncoder.encode(request.getPassword().trim());
+        
+        // CORRECCIÓN: Aplicamos lo mismo al password y nombre.
+        String passHash = passwordEncoder.encode(Objects.requireNonNull(request.getPassword()).trim()); 
         User newUser = User.builder()
             .email(normalizedEmail)
             .passHash(passHash)
-            .nombre(request.getNombre().trim())
+            .nombre(Objects.requireNonNull(request.getNombre()).trim())
             .rol("user")
             .build();
         return userRepository.save(newUser);
@@ -49,10 +55,16 @@ public class UserService {
         // ... (código existente sin cambios)
         String email = request.getEmail().trim().toLowerCase();
         Optional<User> userOpt = userRepository.findByEmail(email);
+        
         if (userOpt.isEmpty()) {
             return new LoginResponse(false, "", "Credenciales inválidas", null);
         }
-        User user = userOpt.get();
+        
+        // CORRECCIÓN: Usamos .orElseThrow() o la aserción 'get()' después de un 
+        // .isPresent/isEmpty. Como ya comprobamos .isEmpty, podemos usar .get().
+        // La advertencia original era aquí (Línea 42):
+        User user = userOpt.get(); // userOpt.get() es seguro porque se comprobó userOpt.isEmpty()
+        
         if (passwordEncoder.matches(request.getPassword().trim(), user.getPassHash())) {
             UserProfileResponse userDto = new UserProfileResponse(user);
             userDto.setPassHash(null);
@@ -87,6 +99,7 @@ public class UserService {
      * Elimina un usuario por su email.
      * @return true si se eliminó, false si no se encontró.
      */
+    @SuppressWarnings("null")
     public boolean deleteUser(String email) {
         if (userRepository.existsById(email)) {
             userRepository.deleteById(email);
@@ -103,7 +116,7 @@ public class UserService {
     public Optional<User> updateUserRole(String email, @Valid AdminRoleUpdateRequest request) {
         return userRepository.findByEmail(email)
             .map(user -> {
-                user.setRol(request.getRol().trim().toLowerCase());
+                user.setRol(Objects.requireNonNull(request.getRol()).trim().toLowerCase());
                 return userRepository.save(user);
             });
     }
@@ -116,7 +129,9 @@ public class UserService {
     public Optional<UserProfileResponse> updateProfile(String email, @Valid ProfileUpdateRequest request) {
         return userRepository.findByEmail(email)
             .map(user -> {
-                user.setNombre(request.getNombre().trim());
+                // CORRECCIÓN: Aplicamos Objects.requireNonNull() o manejamos el null con ternario.
+                // Corrección para la advertencia en Línea 91 y 92:
+                user.setNombre(Objects.requireNonNull(request.getNombre()).trim());
                 user.setFono(request.getFono() != null ? request.getFono().trim() : null);
                 user.setBio(request.getBio() != null ? request.getBio().trim() : null);
                 user.setAvatarUri(request.getAvatarUri() != null ? request.getAvatarUri().trim() : null);
