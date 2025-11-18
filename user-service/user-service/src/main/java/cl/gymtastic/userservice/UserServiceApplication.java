@@ -9,5 +9,5 @@ public class UserServiceApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(UserServiceApplication.class, args);
 	}
-	// Visita http://localhost:8082/users/swagger-ui.html para ver la API
+	// Visita http://localhost:8082/swagger-ui/index.html para ver la API
 }

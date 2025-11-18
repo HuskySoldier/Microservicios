@@ -26,10 +26,11 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Permite acceso público a Swagger
                 .requestMatchers(
-                    "/users/swagger-ui.html", 
-                    "/users/swagger-ui/**", 
-                    "/users/api-docs", 
-                    "/users/api-docs/**"
+                    "/users/swagger-ui.html",
+                    "/users/swagger-ui/**",
+                    "/v3/api-docs/**", // <-- Asegúrate de tener esto
+                    "/swagger-ui/**",  // <-- Y esto por si acaso
+                    "/swagger-ui.html"
                 ).permitAll()
                 // Permite acceso público a los endpoints de la API
                 .requestMatchers(

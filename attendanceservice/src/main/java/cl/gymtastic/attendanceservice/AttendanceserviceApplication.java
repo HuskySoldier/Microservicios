@@ -10,6 +10,6 @@ public class AttendanceserviceApplication {
 		SpringApplication.run(AttendanceserviceApplication.class, args);
 	}
 
-	//visita http://localhost:8087/attendances/swagger-ui.html para ver la API
+	//visita http://localhost:8087/swagger-ui/index.html para ver la API
 
 }

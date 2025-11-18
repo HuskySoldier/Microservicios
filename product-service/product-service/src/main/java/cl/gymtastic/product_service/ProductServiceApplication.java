@@ -9,5 +9,5 @@ public class ProductServiceApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ProductServiceApplication.class, args);
 	}
-	// Visita http://localhost:8081/products/swagger-ui.html para ver la API
+	// Visita http://localhost:8081/swagger-ui/index.html para ver la API
 }

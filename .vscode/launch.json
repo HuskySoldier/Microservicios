@@ -61,6 +61,36 @@
             "projectName": "registerservice",
             "args": "",
             "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-AttendanceserviceApplication<attendanceservice>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "cl.gymtastic.attendanceservice.AttendanceserviceApplication",
+            "projectName": "attendanceservice",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-BookingsserviceApplication<bookingsservice>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "cl.gymtastic.bookingsservice.BookingsserviceApplication",
+            "projectName": "bookingsservice",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-CheckoutserviceApplication<checkoutservice>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "cl.gymtastic.checkoutservice.CheckoutserviceApplication",
+            "projectName": "checkoutservice",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
         }
     ]
 }

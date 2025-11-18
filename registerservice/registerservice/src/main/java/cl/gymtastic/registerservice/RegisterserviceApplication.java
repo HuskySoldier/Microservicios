@@ -12,3 +12,4 @@ public class RegisterserviceApplication {
         SpringApplication.run(RegisterserviceApplication.class, args);
     }
 }
+//http://localhost:8084/swagger-ui/index.html

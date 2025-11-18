@@ -1,4 +1,4 @@
-package cl.gymtastic.product_service.config;
+package cl.gymtastic.bookingsservice.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,12 +17,12 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Permite acceso público a Swagger y a todos los endpoints /products
                 .requestMatchers(
-                    "/products/**", 
-                    "/products/swagger-ui.html", 
-                    "/products/swagger-ui/**",
-                    "/v3/api-docs/**", 
-                    "/products/api-docs", 
-                    "/products/api-docs/**"
+                    "/booking/**", 
+                    "/booking/swagger-ui.html", 
+                    "/booking/swagger-ui/**", 
+                    "/booking/api-docs", 
+                    "/booking/api-docs/**"
+                  
                 ).permitAll() 
                 
                 // CORRECCIÓN: 
