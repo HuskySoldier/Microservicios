@@ -3,6 +3,7 @@ package cl.gymtastic.loginservice.controller;
 import cl.gymtastic.loginservice.dto.LoginRequest;
 import cl.gymtastic.loginservice.dto.LoginResponse;
 import cl.gymtastic.loginservice.service.LoginService;
+import cl.gymtastic.loginservice.service.LoginService.ResetPasswordRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -12,12 +13,32 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import cl.gymtastic.loginservice.dto.ResetPasswordRequest;
 
 @RestController
 @RequestMapping("/login") // Ruta base
 @Tag(name = "Login Service", description = "Endpoint para autenticar usuarios")
 @CrossOrigin // Permite CORS
 public class LoginController {
+
+    @Operation(summary = "Paso 1: Solicitar recuperación de contraseña")
+    @PostMapping("/request-reset")
+    public ResponseEntity<?> requestReset(@RequestParam String email) {
+        loginService.requestReset(email);
+        // Siempre retornamos OK por seguridad (para no revelar si el email existe o no)
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Paso 2: Confirmar nueva contraseña con token")
+    @PostMapping("/confirm-reset")
+    public ResponseEntity<?> confirmReset(@RequestBody ResetPasswordRequest request) {
+        boolean success = loginService.confirmReset(request);
+        if (success) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.badRequest().body("Código inválido o error al procesar.");
+        }
+    }
 
     @Autowired
     private LoginService loginService;

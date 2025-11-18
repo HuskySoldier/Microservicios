@@ -1,12 +1,12 @@
 package cl.gymtastic.product_service.controller;
 
-// ... (Importaciones existentes)
-import cl.gymtastic.product_service.dto.StockDecreaseRequest; // <-- Importar
+import cl.gymtastic.product_service.dto.StockDecreaseRequest;
 import cl.gymtastic.product_service.model.Product;
-import cl.gymtastic.product_service.service.InsufficientStockException; // <-- Importar
+import cl.gymtastic.product_service.service.InsufficientStockException;
 import cl.gymtastic.product_service.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,46 +14,57 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map; // <-- Importar Map
+import java.util.Map;
 
 @RestController
 @RequestMapping("/products")
-// ... (Anotaciones existentes)
+@Tag(name = "Product Service", description = "Endpoints para gestión de Productos y Stock")
+@CrossOrigin
 public class ProductController {
 
     @Autowired
     private ProductService productService;
 
-    // ... (Endpoints existentes: GET, GET/{tipo}, POST, PUT, DELETE) ...
+    // --- CRUD BÁSICO (Admin y Lectura) ---
+
+    @Operation(summary = "Obtener todos los productos")
     @GetMapping
-    public ResponseEntity<List<Product>> getAllProducts() { // ... (existente)
+    public ResponseEntity<List<Product>> getAllProducts() {
         List<Product> products = productService.getAllProducts();
         if (products.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(products);
     }
+    
+    @Operation(summary = "Obtener productos por tipo (plan/merch)")
     @GetMapping("/{tipo}")
-    public ResponseEntity<List<Product>> getProductsByType(@PathVariable String tipo) { // ... (existente)
+    public ResponseEntity<List<Product>> getProductsByType(@PathVariable String tipo) {
         List<Product> products = productService.getProductsByType(tipo);
         if (products.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(products);
     }
+    
+    @Operation(summary = "Crear un nuevo producto (Admin)")
     @PostMapping
-    public ResponseEntity<Product> createProduct(@RequestBody Product product) { // ... (existente)
+    public ResponseEntity<Product> createProduct(@RequestBody Product product) {
         Product newProduct = productService.createProduct(product);
         return new ResponseEntity<>(newProduct, HttpStatus.CREATED);
     }
+    
+    @Operation(summary = "Actualizar un producto existente (Admin)")
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable Integer id, @RequestBody Product productDetails) { // ... (existente)
+    public ResponseEntity<Product> updateProduct(@PathVariable Integer id, @RequestBody Product productDetails) {
         return productService.updateProduct(id, productDetails)
                 .map(updatedProduct -> ResponseEntity.ok(updatedProduct))
                 .orElse(ResponseEntity.notFound().build());
     }
+    
+    @Operation(summary = "Eliminar un producto (Admin)")
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteProduct(@PathVariable Integer id) { // ... (existente)
+    public ResponseEntity<?> deleteProduct(@PathVariable Integer id) {
         if (productService.deleteProduct(id)) {
             return ResponseEntity.noContent().build();
         } else {
@@ -62,7 +73,8 @@ public class ProductController {
     }
 
 
-    // --- AÑADIDO: Endpoint para descontar stock ---
+    // --- LÓGICA DE STOCK (Para Checkout Service) ---
+    
     @Operation(summary = "Descontar stock de productos (Checkout)")
     @ApiResponse(responseCode = "200", description = "Stock descontado")
     @ApiResponse(responseCode = "409", description = "Stock insuficiente")

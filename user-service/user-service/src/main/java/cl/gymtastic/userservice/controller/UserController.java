@@ -117,4 +117,21 @@ public class UserController {
                 .map(profile -> ResponseEntity.ok(profile))
                 .orElse(ResponseEntity.notFound().build());
     }
+    @Operation(summary = "Solicitar reset de contraseña (Interno)")
+    @PostMapping("/request-reset")
+    public ResponseEntity<?> requestReset(@RequestParam String email) {
+        userService.requestPasswordReset(email);
+        return ResponseEntity.ok(Map.of("message", "Si el correo existe, se ha enviado un código."));
+    }
+
+    @Operation(summary = "Confirmar reset de contraseña (Interno)")
+    @PostMapping("/confirm-reset")
+    public ResponseEntity<?> confirmReset(@RequestBody ResetPasswordRequest request) {
+        boolean success = userService.confirmPasswordReset(request);
+        if (success) {
+            return ResponseEntity.ok(Map.of("message", "Contraseña actualizada exitosamente."));
+        } else {
+            return ResponseEntity.badRequest().body(Map.of("message", "Token inválido o expirado."));
+        }
+    }
 }

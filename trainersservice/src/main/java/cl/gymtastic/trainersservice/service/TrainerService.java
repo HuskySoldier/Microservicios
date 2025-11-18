@@ -18,14 +18,18 @@ public class TrainerService {
         return trainerRepository.findAll();
     }
 
+    /** Crea un nuevo trainer (POST). */
     public Trainer createTrainer(Trainer trainer) {
-        // save() crea un nuevo registro si el ID es nulo o 0
+        // Asegura que el ID sea nulo para forzar la creación de uno nuevo
+        trainer.setId(null); 
         return trainerRepository.save(trainer);
     }
 
+    /** Actualiza un trainer existente (PUT). */
     public Optional<Trainer> updateTrainer(Long id, Trainer trainerDetails) {
         return trainerRepository.findById(id)
             .map(existingTrainer -> {
+                // Actualiza solo los campos que deben ser editables
                 existingTrainer.setNombre(trainerDetails.getNombre());
                 existingTrainer.setEspecialidad(trainerDetails.getEspecialidad());
                 existingTrainer.setFono(trainerDetails.getFono());
@@ -35,6 +39,7 @@ public class TrainerService {
             });
     }
 
+    /** Elimina un trainer (DELETE). */
     public boolean deleteTrainer(Long id) {
         if (trainerRepository.existsById(id)) {
             trainerRepository.deleteById(id);

@@ -6,6 +6,9 @@ import cl.gymtastic.loginservice.dto.LoginResponse;
 import cl.gymtastic.loginservice.dto.UserProfileResponse;
 import feign.FeignException;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+import cl.gymtastic.loginservice.dto.ResetPasswordRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,6 +18,24 @@ import org.springframework.validation.annotation.Validated;
 @Service
 @Validated
 public class LoginService {
+
+    public void requestReset(String email) {
+        try {
+            userClient.requestReset(email);
+        } catch (Exception e) {
+            // Loggear error pero no romper el flujo
+            System.err.println("Error solicitando reset: " + e.getMessage());
+        }
+    }
+
+    public boolean confirmReset(ResetPasswordRequest request) {
+        try {
+            ResponseEntity<Object> response = userClient.confirmReset(request);
+            return response.getStatusCode().is2xxSuccessful();
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     @Autowired
     private UserClient userClient; // Cliente para llamar a user-service
@@ -62,5 +83,11 @@ public class LoginService {
             // Contraseña incorrecta
             return new LoginResponse(false, null, "Credenciales inválidas (Contraseña incorrecta)", null);
         }
+    }
+    @Data
+    public class ResetPasswordRequest {
+        @NotBlank private String email;
+        @NotBlank private String token;
+        @NotBlank private String newPassword;
     }
 }

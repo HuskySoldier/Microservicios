@@ -12,6 +12,7 @@ import org.springframework.validation.annotation.Validated;
 
 import java.util.List; 
 import java.util.Optional;
+import java.util.Random;
 import java.util.Objects; // <-- AÑADIDO: Para chequeos de nulidad en el servicio
 
 @Service
@@ -156,5 +157,43 @@ public class UserService {
                 User updatedUser = userRepository.save(user);
                 return new UserProfileResponse(updatedUser); // Devuelve el DTO
             });
+    }
+
+    public void requestPasswordReset(String email) {
+        userRepository.findByEmail(email.trim().toLowerCase()).ifPresent(user -> {
+            // Generar código de 6 dígitos
+            String token = String.format("%06d", new Random().nextInt(999999));
+            
+            user.setResetToken(token);
+            userRepository.save(user);
+
+            // --- SIMULACIÓN: IMPRIMIR EN CONSOLA ---
+            System.out.println("=============================================");
+            System.out.println(" [DEV] TOKEN DE RECUPERACIÓN PARA: " + email);
+            System.out.println(" [DEV] CÓDIGO: " + token);
+            System.out.println("=============================================");
+        });
+        // Por seguridad, no lanzamos error si el email no existe
+    }
+
+    // 2. Confirmar y Cambiar Contraseña
+    public boolean confirmPasswordReset(ResetPasswordRequest request) {
+        Optional<User> userOpt = userRepository.findByEmail(request.getEmail().trim().toLowerCase());
+
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            // Validar que el token exista y coincida
+            if (user.getResetToken() != null && user.getResetToken().equals(request.getToken().trim())) {
+                
+                // Encriptar la nueva contraseña
+                user.setPassHash(passwordEncoder.encode(request.getNewPassword().trim()));
+                
+                // Borrar el token para que no se use de nuevo
+                user.setResetToken(null);
+                userRepository.save(user);
+                return true;
+            }
+        }
+        return false;
     }
 }

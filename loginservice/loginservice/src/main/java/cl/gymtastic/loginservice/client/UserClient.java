@@ -1,9 +1,13 @@
 package cl.gymtastic.loginservice.client;
 
 import cl.gymtastic.loginservice.dto.UserProfileResponse;
+import cl.gymtastic.loginservice.service.LoginService.ResetPasswordRequest;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+
 
 // name = nombre lógico
 // url = URL física (tomada de application.properties)
@@ -16,4 +20,12 @@ public interface UserClient {
      */
     @GetMapping("/users/by-email")
     ResponseEntity<UserProfileResponse> buscarPorEmail(@RequestParam String email);
+
+    // ... imports
+
+    @PostMapping("/request-reset")
+    ResponseEntity<Object> requestReset(@RequestParam("email") String email);
+
+    @PostMapping("/confirm-reset")
+    ResponseEntity<Object> confirmReset(@RequestBody ResetPasswordRequest request);
 }

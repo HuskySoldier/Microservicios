@@ -1,50 +1,64 @@
 package cl.gymtastic.product_service.service;
 
-import cl.gymtastic.product_service.dto.CartItemDto; // <-- Importar
-import cl.gymtastic.product_service.dto.StockDecreaseRequest; // <-- Importar
+import cl.gymtastic.product_service.dto.CartItemDto;
+import cl.gymtastic.product_service.dto.StockDecreaseRequest;
 import cl.gymtastic.product_service.model.Product;
 import cl.gymtastic.product_service.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional; // <-- Importar
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors; // <-- Importar
+import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
 
-    // ... (código existente: productRepository, getAllProducts, etc.) ...
     @Autowired
     private ProductRepository productRepository;
 
-    public List<Product> getAllProducts() { // ... (existente)
+    // --- (CRUD BÁSICO) ---
+
+    /** Obtiene todos los productos. */
+    public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
-    public List<Product> getProductsByType(String tipo) { // ... (existente)
+    
+    /** Obtiene productos por tipo ("plan" o "merch"). */
+    public List<Product> getProductsByType(String tipo) {
         String tipoBusqueda = tipo.trim().toLowerCase();
         return productRepository.findByTipo(tipoBusqueda);
     }
-    public Product createProduct(Product product) { // ... (existente)
-        if (product.getTipo() == null || !product.getTipo().equals("plan")) {
+    
+    /** Crea un nuevo producto (usado por Admin). */
+    public Product createProduct(Product product) {
+        // Asegura que el tipo sea 'merch' si no es 'plan'
+        if (product.getTipo() == null || !product.getTipo().trim().equalsIgnoreCase("plan")) {
             product.setTipo("merch");
         }
         return productRepository.save(product);
     }
-    public Optional<Product> updateProduct(Integer id, Product productDetails) { // ... (existente)
+    
+    /** Actualiza un producto existente (usado por Admin). */
+    public Optional<Product> updateProduct(Integer id, Product productDetails) {
         return productRepository.findById(id)
             .map(existingProduct -> {
+                // Actualiza solo los campos que deberían ser editables
                 existingProduct.setNombre(productDetails.getNombre());
                 existingProduct.setDescripcion(productDetails.getDescripcion());
                 existingProduct.setPrecio(productDetails.getPrecio());
                 existingProduct.setStock(productDetails.getStock());
+                // El tipo y la imagen también deben ser actualizables por el Admin
                 existingProduct.setImg(productDetails.getImg());
                 existingProduct.setTipo(productDetails.getTipo());
+                
                 return productRepository.save(existingProduct);
             });
     }
-    public boolean deleteProduct(Integer id) { // ... (existente)
+    
+    /** Elimina un producto por ID (usado por Admin). */
+    public boolean deleteProduct(Integer id) {
         if (productRepository.existsById(id)) {
             productRepository.deleteById(id);
             return true;
@@ -52,7 +66,8 @@ public class ProductService {
         return false;
     }
 
-    // --- AÑADIDO: Lógica transaccional para descontar stock ---
+    // --- (LÓGICA DE STOCK PARA CHECKOUT) ---
+    
     /**
      * Procesa una lista de items para descontar stock.
      * Es transaccional: si un item falla, hace rollback de todos.
@@ -80,9 +95,9 @@ public class ProductService {
     }
 }
 
-// --- AÑADIDO: Excepción personalizada ---
-class InsufficientStockException extends RuntimeException {
-    public InsufficientStockException(String message) {
-        super(message);
-    }
+// --- AÑADIDO: Excepción personalizada (Si ya existe, omite esta redefinición) ---
+ class InsufficientStockException extends RuntimeException {
+     public InsufficientStockException(String message) {
+         super(message);
+    } 
 }

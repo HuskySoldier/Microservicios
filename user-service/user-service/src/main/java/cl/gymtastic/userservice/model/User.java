@@ -67,4 +67,8 @@ public class User {
     @Column(length = 1024) // Más espacio para la biografía
     @Schema(description = "Biografía del usuario", example = "Entusiasta del fitness...")
     private String bio;
+
+    @Column(length = 10) // Es un código corto
+    @Schema(description = "Token temporal para resetear contraseña", hidden = true)
+    private String resetToken;
 }
