@@ -1,8 +1,7 @@
 package cl.gymtastic.loginservice.client;
 
+import cl.gymtastic.loginservice.dto.ResetPasswordRequest;
 import cl.gymtastic.loginservice.dto.UserProfileResponse;
-import cl.gymtastic.loginservice.service.LoginService.ResetPasswordRequest;
-
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
