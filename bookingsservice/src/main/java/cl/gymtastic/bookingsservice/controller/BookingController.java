@@ -31,4 +31,10 @@ public class BookingController {
     public ResponseEntity<Booking> createBooking(@RequestBody Booking booking) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.createBooking(booking));
     }
+
+    @Operation(summary = "Obtener reservas asignadas a un trainer")
+    @GetMapping("/trainer/{trainerId}")
+    public ResponseEntity<List<Booking>> getTrainerBookings(@PathVariable Long trainerId) {
+        return ResponseEntity.ok(service.getTrainerBookings(trainerId));
+    }
 }

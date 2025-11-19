@@ -8,4 +8,7 @@ import java.util.List;
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByUserEmailOrderByFechaHoraDesc(String userEmail);
+    
+    // --- NUEVO: Buscar por Trainer ---
+    List<Booking> findByTrainerIdOrderByFechaHoraAsc(Long trainerId);
 }
