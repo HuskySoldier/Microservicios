@@ -33,6 +33,12 @@ public class ProductService {
     
     /** Crea un nuevo producto (usado por Admin). */
     public Product createProduct(Product product) {
+        // --- CORRECCIÓN: Forzar ID nulo ---
+        // Esto asegura que la base de datos genere un nuevo ID autoincremental
+        // e ignore el "0" que viene de la App.
+        product.setId(null); 
+        // ----------------------------------
+
         // Asegura que el tipo sea 'merch' si no es 'plan'
         if (product.getTipo() == null || !product.getTipo().trim().equalsIgnoreCase("plan")) {
             product.setTipo("merch");

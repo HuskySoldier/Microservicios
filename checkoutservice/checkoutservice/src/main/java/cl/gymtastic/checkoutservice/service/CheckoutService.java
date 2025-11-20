@@ -85,17 +85,18 @@ public class CheckoutService {
                 request.getUserEmail(),
                 LocalDateTime.now(),
                 description,
-                total
+                total,
+                request.getItems().stream().mapToInt(CartItemDto::getCantidad).sum() // Sumar cantidades
         );
         purchaseOrderRepository.save(order);
     }
 
     public List<OrderDto> getOrderHistory(String email) {
-        // --- USAR PURCHASE ORDER ---
         List<PurchaseOrder> orders = purchaseOrderRepository.findByUserEmailOrderByDateDesc(email);
         
         return orders.stream()
-                .map(o -> new OrderDto(o.getId(), o.getDescription(), o.getTotalAmount(), o.getDate()))
+                // Agregamos o.getItemsCount() al final
+                .map(o -> new OrderDto(o.getId(), o.getDescription(), o.getTotalAmount(), o.getDate(), o.getItemsCount()))
                 .collect(Collectors.toList());
     }
     

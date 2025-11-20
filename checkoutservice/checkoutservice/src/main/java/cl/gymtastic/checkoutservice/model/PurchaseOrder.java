@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "purchase_orders") // Cambiamos el nombre de la tabla para evitar conflictos
+@Table(name = "purchase_orders")
 public class PurchaseOrder {
 
     @Id
@@ -21,17 +21,22 @@ public class PurchaseOrder {
     private String description;
 
     private double totalAmount;
+    
+    // --- NUEVO CAMPO ---
+    private int itemsCount; 
 
     public PurchaseOrder() {}
 
-    public PurchaseOrder(String userEmail, LocalDateTime date, String description, double totalAmount) {
+    // Actualizamos el constructor para recibir el itemsCount
+    public PurchaseOrder(String userEmail, LocalDateTime date, String description, double totalAmount, int itemsCount) {
         this.userEmail = userEmail;
         this.date = date;
         this.description = description;
         this.totalAmount = totalAmount;
+        this.itemsCount = itemsCount; // <--- Asignar
     }
 
-    // Getters y Setters
+    // Getters y Setters existentes...
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getUserEmail() { return userEmail; }
@@ -42,4 +47,8 @@ public class PurchaseOrder {
     public void setDescription(String description) { this.description = description; }
     public double getTotalAmount() { return totalAmount; }
     public void setTotalAmount(double totalAmount) { this.totalAmount = totalAmount; }
+    
+    // --- NUEVOS GETTER Y SETTER ---
+    public int getItemsCount() { return itemsCount; }
+    public void setItemsCount(int itemsCount) { this.itemsCount = itemsCount; }
 }
