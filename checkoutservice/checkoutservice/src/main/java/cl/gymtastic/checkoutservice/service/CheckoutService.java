@@ -3,11 +3,14 @@ package cl.gymtastic.checkoutservice.service;
 import cl.gymtastic.checkoutservice.client.ProductClient;
 import cl.gymtastic.checkoutservice.client.UserClient;
 import cl.gymtastic.checkoutservice.dto.*;
+import cl.gymtastic.checkoutservice.model.Order;
+import cl.gymtastic.checkoutservice.repository.OrderRepository;
 import feign.FeignException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -22,7 +25,10 @@ public class CheckoutService {
     @Autowired
     private ProductClient productClient;
 
-    // Lógica de "canBuy" replicada de PlanesScreen.kt
+    // --- INYECCIÓN DEL REPOSITORIO NUEVO ---
+    @Autowired
+    private OrderRepository orderRepository;
+
     private final int THRESHOLD_DAYS = 3; 
 
     public Map<String, Object> processCheckout(CheckoutRequest request) {
@@ -32,46 +38,38 @@ public class CheckoutService {
                 .filter(item -> "merch".equals(item.getTipo()))
                 .collect(Collectors.toList());
 
-        // --- 1. Validar Plan (si aplica) ---
+        // --- 1. Validar Plan ---
         if (hasPlanInCart) {
-            // 1a. Validar que se seleccionó una sede
             if (request.getSede() == null) {
                 throw new CheckoutException("Selecciona una sede para asociar tu plan.");
             }
-            
-            // 1b. Validar si el usuario puede comprar un plan
             ResponseEntity<UserProfileResponse> userResponse = userClient.getUserProfile(request.getUserEmail());
             if (!userResponse.getStatusCode().is2xxSuccessful() || userResponse.getBody() == null) {
                 throw new CheckoutException("Usuario no encontrado.");
             }
-            
             UserProfileResponse user = userResponse.getBody();
             if (!canBuyPlan(user.getPlanEndMillis())) {
                 long remainingDays = TimeUnit.MILLISECONDS.toDays(user.getPlanEndMillis() - System.currentTimeMillis());
-                throw new CheckoutException("Ya tienes un plan activo. Podrás renovar cuando falten " + THRESHOLD_DAYS + " días o menos. Restan: " + remainingDays);
+                throw new CheckoutException("Ya tienes un plan activo. Días restantes: " + remainingDays);
             }
         }
 
-        // --- 2. Descontar Stock de Merch (si aplica) ---
+        // --- 2. Descontar Stock ---
         if (!merchItems.isEmpty()) {
             try {
                 ResponseEntity<Map<String, String>> stockResponse = productClient.decreaseStock(new StockDecreaseRequest(merchItems));
                 if (!stockResponse.getStatusCode().is2xxSuccessful()) {
-                    // Esto captura el 409 Conflict (stock insuficiente)
                     throw new CheckoutException("Stock insuficiente para uno o más productos.");
                 }
             } catch (FeignException e) {
-                // Captura el 409 (Conflict) u otros errores
                 throw new CheckoutException("Error al descontar stock: " + e.contentUTF8());
             }
         }
 
-        // --- 3. Activar Plan (si aplica) ---
+        // --- 3. Activar Plan ---
         if (hasPlanInCart) {
             SedeDto sede = request.getSede();
             SubscriptionUpdateRequest subRequest = new SubscriptionUpdateRequest();
-            
-            // Lógica de 30 días de PaymentScreen.kt
             long newPlanEnd = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30);
             
             subRequest.setPlanEndMillis(newPlanEnd);
@@ -80,9 +78,11 @@ public class CheckoutService {
             subRequest.setSedeLat(sede.getLat());
             subRequest.setSedeLng(sede.getLng());
             
-            // Llamar a user-service para actualizar la suscripción
             userClient.updateSubscription(request.getUserEmail(), subRequest);
         }
+
+        // --- 4. GUARDAR EN HISTORIAL (NUEVA LÓGICA) ---
+        saveOrderHistory(request);
 
         return Map.of(
             "success", true,
@@ -90,14 +90,45 @@ public class CheckoutService {
             "planActivated", hasPlanInCart
         );
     }
+
+    // --- Métodos Privados ---
+
+    private void saveOrderHistory(CheckoutRequest request) {
+        // 1. Crear descripción legible (Ej: "Plan GymTastic, Proteína Whey x2")
+        String description = request.getItems().stream()
+                .map(item -> item.getNombre() + (item.getCantidad() > 1 ? " x" + item.getCantidad() : ""))
+                .collect(Collectors.joining(", "));
+
+        // 2. Calcular total (Asumiendo que CartItemDto tiene getPrecio())
+        double total = request.getItems().stream()
+                .mapToDouble(item -> item.getPrecio() * item.getCantidad())
+                .sum();
+
+        // 3. Guardar en BD
+        Order order = new Order(
+                request.getUserEmail(),
+                LocalDateTime.now(),
+                description,
+                total
+        );
+        orderRepository.save(order);
+    }
+
+    // --- Método Público para consultar Historial ---
+    public List<OrderDto> getOrderHistory(String email) {
+        List<Order> orders = orderRepository.findByUserEmailOrderByDateDesc(email);
+        
+        // Convertir Entidad -> DTO
+        return orders.stream()
+                .map(o -> new OrderDto(o.getId(), o.getDescription(), o.getTotalAmount(), o.getDate()))
+                .collect(Collectors.toList());
+    }
     
-    // Lógica de canBuy de la App
     private boolean canBuyPlan(Long planEndMillis) {
-        if (planEndMillis == null) return true; // No tiene plan
+        if (planEndMillis == null) return true;
         long diff = planEndMillis - System.currentTimeMillis();
-        if (diff <= 0) return true; // Plan expiró
+        if (diff <= 0) return true;
         long daysRemaining = TimeUnit.MILLISECONDS.toDays(diff);
         return daysRemaining <= THRESHOLD_DAYS;
     }
 }
-
