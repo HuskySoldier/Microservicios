@@ -4,8 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 
-// Eliminamos el parámetro 'exclude' para permitir que la BD funcione
-@SpringBootApplication
+@SpringBootApplication // <-- ¡Borra el paréntesis del exclude!
 @EnableFeignClients
 public class CheckoutserviceApplication {
 
