@@ -95,9 +95,3 @@ public class ProductService {
     }
 }
 
-// --- AÑADIDO: Excepción personalizada (Si ya existe, omite esta redefinición) ---
- class InsufficientStockException extends RuntimeException {
-     public InsufficientStockException(String message) {
-         super(message);
-    } 
-}

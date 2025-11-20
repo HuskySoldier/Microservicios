@@ -1,20 +1,17 @@
 package cl.gymtastic.checkoutservice.dto;
 
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonProperty; // <--- IMPORTANTE
 
 @Data
 public class CartItemDto {
     private Integer productId;
     
-    // Cambiamos 'qty' a 'cantidad' para coincidir con tu CheckoutService
-    // OJO: Asegúrate de que tu App Android envíe este campo como "cantidad" en el JSON, 
-    // o usa @JsonProperty("qty") si quieres mantener el JSON viejo.
+    // Agregamos @JsonProperty para que al enviarse al otro servicio se llame "qty"
+    @JsonProperty("qty") 
     private int cantidad; 
     
-    private String tipo; // "plan" o "merch"
-
-    // --- NUEVOS CAMPOS NECESARIOS PARA EL HISTORIAL ---
-    // Estos son necesarios para guardar la descripción (ej: "Proteina Whey") y calcular el total.
+    private String tipo; 
     private String nombre; 
     private Double precio; 
 }

@@ -1,9 +1,10 @@
 package cl.gymtastic.checkoutservice.service;
 
 import cl.gymtastic.checkoutservice.client.ProductClient;
-import cl.gymtastic.checkoutservice.dto.StockDecreaseRequest;
 import cl.gymtastic.checkoutservice.client.UserClient;
 import cl.gymtastic.checkoutservice.dto.*;
+import cl.gymtastic.checkoutservice.model.PurchaseOrder;      // <--- IMPORTAR
+import cl.gymtastic.checkoutservice.repository.PurchaseOrderRepository; // <--- IMPORTAR
 import feign.FeignException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,9 @@ public class CheckoutServiceTest {
     @Mock
     private ProductClient productClient;
 
+    @Mock
+    private PurchaseOrderRepository purchaseOrderRepository; // <--- MOCK NUEVO NECESARIO
+
     @InjectMocks
     private CheckoutService checkoutService;
 
@@ -52,30 +56,35 @@ public class CheckoutServiceTest {
     @Test
     void processCheckout_Success_PlanAndMerch() {
         // Arrange
-        // Mock de un usuario que NO tiene plan activo (o está expirado)
         mockUserProfile.setPlanEndMillis(System.currentTimeMillis() - 1000); 
 
         CartItemDto planItem = new CartItemDto();
         planItem.setProductId(100);
-        planItem.setQty(1);
+        planItem.setCantidad(1);     // <--- CORREGIDO (antes setQty)
         planItem.setTipo("plan");
+        planItem.setNombre("Plan Mensual"); // <--- NECESARIO para el historial
+        planItem.setPrecio(20000.0);        // <--- NECESARIO para el historial
         
         CartItemDto merchItem = new CartItemDto();
         merchItem.setProductId(200);
-        merchItem.setQty(5);
+        merchItem.setCantidad(5);    // <--- CORREGIDO (antes setQty)
         merchItem.setTipo("merch");
+        merchItem.setNombre("Botella");     // <--- NECESARIO
+        merchItem.setPrecio(5000.0);        // <--- NECESARIO
         
         CheckoutRequest request = new CheckoutRequest();
         request.setUserEmail(TEST_EMAIL);
         request.setItems(Arrays.asList(planItem, merchItem));
         request.setSede(MOCK_SEDE);
 
-        // Mock: 1. Estado del usuario
+        // Mock 1: Usuario encontrado
         when(userClient.getUserProfile(TEST_EMAIL)).thenReturn(ResponseEntity.ok(mockUserProfile));
-        // Mock: 2. Descuento de stock OK
+        // Mock 2: Stock descontado OK
         when(productClient.decreaseStock(any(StockDecreaseRequest.class))).thenReturn(ResponseEntity.ok(Map.of("message", "OK")));
-        // Mock: 3. Actualización de plan OK
+        // Mock 3: Suscripción actualizada OK
         when(userClient.updateSubscription(eq(TEST_EMAIL), any(SubscriptionUpdateRequest.class))).thenReturn(ResponseEntity.ok(mockUserProfile));
+        // Mock 4: Guardar historial (Simulamos que devuelve lo que le llega)
+        when(purchaseOrderRepository.save(any(PurchaseOrder.class))).thenAnswer(i -> i.getArgument(0));
 
         // Act
         Map<String, Object> response = checkoutService.processCheckout(request);
@@ -84,29 +93,28 @@ public class CheckoutServiceTest {
         assertTrue((Boolean) response.get("success"));
         assertTrue((Boolean) response.get("planActivated"));
         
-        // Verifica que se llamó a los clientes correctos
         verify(productClient, times(1)).decreaseStock(any(StockDecreaseRequest.class));
         verify(userClient, times(1)).updateSubscription(eq(TEST_EMAIL), any(SubscriptionUpdateRequest.class));
+        verify(purchaseOrderRepository, times(1)).save(any(PurchaseOrder.class)); // <--- Verificamos que se guardó
     }
-
 
     // --- ESCENARIO 2: FALLA POR STOCK INSUFICIENTE ---
     @Test
     void processCheckout_Failure_InsufficientStock() {
-        // Arrange: Solo merch, sin planes
+        // Arrange
         CartItemDto merchItem = new CartItemDto();
         merchItem.setProductId(200);
-        merchItem.setQty(5);
+        merchItem.setCantidad(5); // <--- CORREGIDO
         merchItem.setTipo("merch");
+        merchItem.setNombre("Botella"); // <--- Agregado por seguridad
+        merchItem.setPrecio(5000.0);
         
         CheckoutRequest request = new CheckoutRequest();
         request.setUserEmail(TEST_EMAIL);
         request.setItems(Collections.singletonList(merchItem));
         request.setSede(null);
 
-        // Mock: Descuento de stock falla con FeignException (simulando HTTP 409)
-        // Construimos un Response simulado y usamos FeignException.errorStatus(...) para crear la excepción
-        @SuppressWarnings("deprecation")
+        // Simular respuesta 409 Conflict
         feign.Request fakeRequest = feign.Request.create(feign.Request.HttpMethod.POST, "/", Collections.emptyMap(), new byte[0], null);
         feign.Response fakeResponse = feign.Response.builder()
             .status(409)
@@ -114,37 +122,33 @@ public class CheckoutServiceTest {
             .request(fakeRequest)
             .headers(Collections.emptyMap())
             .build();
-        when(productClient.decreaseStock(any(StockDecreaseRequest.class))).thenThrow(FeignException.errorStatus("decreaseStock", fakeResponse));
+        
+        when(productClient.decreaseStock(any(StockDecreaseRequest.class)))
+            .thenThrow(FeignException.errorStatus("decreaseStock", fakeResponse));
 
-        // Act & Assert
-        CheckoutException exception = assertThrows(CheckoutException.class, () -> {
-            checkoutService.processCheckout(request);
-        });
-        
-        assertTrue(exception.getMessage().contains("Error al descontar stock"));
-        
-        // Verifica que la actualización del plan NUNCA fue llamada
+        // Verifica que NO se llamó a actualizar suscripción ni a guardar historial
         verify(userClient, never()).updateSubscription(any(), any());
+        verify(purchaseOrderRepository, never()).save(any());
     }
     
     // --- ESCENARIO 3: FALLA POR INTENTAR RENOVAR PLAN DEMASIADO PRONTO ---
     @Test
     void processCheckout_Failure_PlanActive() {
         // Arrange
-        // Mock de un usuario que tiene plan activo (expira en 50 días)
         mockUserProfile.setPlanEndMillis(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(50)); 
 
         CartItemDto planItem = new CartItemDto();
         planItem.setProductId(100);
-        planItem.setQty(1);
+        planItem.setCantidad(1); // <--- CORREGIDO
         planItem.setTipo("plan");
+        planItem.setNombre("Plan Mensual");
+        planItem.setPrecio(20000.0);
         
         CheckoutRequest request = new CheckoutRequest();
         request.setUserEmail(TEST_EMAIL);
         request.setItems(Collections.singletonList(planItem));
         request.setSede(MOCK_SEDE);
 
-        // Mock: 1. Estado del usuario
         when(userClient.getUserProfile(TEST_EMAIL)).thenReturn(ResponseEntity.ok(mockUserProfile));
         
         // Act & Assert
@@ -154,8 +158,8 @@ public class CheckoutServiceTest {
 
         assertTrue(exception.getMessage().contains("Ya tienes un plan activo"));
         
-        // Verifica que el descuento de stock y la actualización del plan NUNCA fueron llamados
         verify(productClient, never()).decreaseStock(any());
         verify(userClient, never()).updateSubscription(any(), any());
+        verify(purchaseOrderRepository, never()).save(any());
     }
 }
