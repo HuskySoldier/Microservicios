@@ -14,6 +14,6 @@ public class UserServiceApplication {
 	// gymtastic_bookings
 	// gymtastic_checkout
 	// gymtastic_product
-	// gymtastic_traiers
+	// gymtastic_trainers
 	// gymtastic_users
 }
