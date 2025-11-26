@@ -13,30 +13,23 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // Deshabilitar CSRF para APIs
+            .csrf(csrf -> csrf.disable()) // Deshabilitar CSRF para APIs REST
             .authorizeHttpRequests(auth -> auth
-                // Permite acceso público a Swagger y a todos los endpoints /products
+                // Permitir acceso a Swagger (documentación)
                 .requestMatchers(
-                    "/products/**", 
-                    "/products/swagger-ui.html", 
-                    "/products/swagger-ui/**",
                     "/v3/api-docs/**", 
-                    "/products/api-docs", 
-                    "/products/api-docs/**"
-                ).permitAll() 
+                    "/swagger-ui/**", 
+                    "/swagger-ui.html"
+                ).permitAll()
                 
-                // CORRECCIÓN: 
-                // Como aún no implementamos tokens, permitimos todo temporalmente
-                // (Borra esta línea cuando implementes JWT/OAuth2 y descomenta la de abajo)
-                .anyRequest().permitAll()
+                // --- REGLAS DE PRODUCTOS ---
+                // Permitir ver productos a cualquiera (sin login)
+                .requestMatchers("/products/**").permitAll()
                 
-                // (La regla original era: .anyRequest().authenticated())
+                // Cualquier otra cosa requiere autenticación (opcional según tu fase de desarrollo)
+                .anyRequest().permitAll() 
             );
-        
-        // BORRADO: 
-        // Se eliminó la segunda llamada a http.authorizeHttpRequests(...) 
-        // que causaba el conflicto.
-
+            
         return http.build();
     }
 }
