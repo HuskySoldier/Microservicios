@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-// ELIMINADO: @RequestMapping("/checkout") para poder usar múltiples rutas base ("checkout" y "orders")
 @CrossOrigin
 public class CheckoutController {
 
@@ -38,10 +37,16 @@ public class CheckoutController {
     }
 
     // 2. Ruta para el HISTORIAL (Coincide con @GET("$BASE_IP:8086/orders/{email}"))
-    @Operation(summary = "Obtener historial de compras")
+    @Operation(summary = "Obtener historial de compras de un usuario")
     @GetMapping("/orders/{email}") 
     public ResponseEntity<List<OrderDto>> getOrderHistory(@PathVariable String email) {
-        // Asegúrate de que el método en tu servicio se llame 'getOrderHistory'
         return ResponseEntity.ok(checkoutService.getOrderHistory(email));
+    }
+
+    // --- NUEVO ENDPOINT PARA ADMIN ---
+    @Operation(summary = "Obtener TODAS las órdenes (Admin)")
+    @GetMapping("/orders") 
+    public ResponseEntity<List<OrderDto>> getAllOrders() {
+        return ResponseEntity.ok(checkoutService.getAllOrders());
     }
 }

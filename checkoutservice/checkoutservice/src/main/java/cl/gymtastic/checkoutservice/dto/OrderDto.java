@@ -4,26 +4,27 @@ import java.time.LocalDateTime;
 
 public class OrderDto {
     private Long id;
+    private String userEmail; // <--- NUEVO CAMPO
     private String description;
     private double totalAmount;
     private LocalDateTime date;
-    private int itemsCount; // <--- NUEVO
+    private int itemsCount;
 
-    // Actualizamos constructor
-    public OrderDto(Long id, String description, double totalAmount, LocalDateTime date, int itemsCount) {
+    // Constructor actualizado
+    public OrderDto(Long id, String userEmail, String description, double totalAmount, LocalDateTime date, int itemsCount) {
         this.id = id;
+        this.userEmail = userEmail; // <--- Asignar
         this.description = description;
         this.totalAmount = totalAmount;
         this.date = date;
-        this.itemsCount = itemsCount; // <--- Asignar
+        this.itemsCount = itemsCount;
     }
 
     // Getters
     public Long getId() { return id; }
+    public String getUserEmail() { return userEmail; } // <--- Nuevo Getter
     public String getDescription() { return description; }
     public double getTotalAmount() { return totalAmount; }
     public LocalDateTime getDate() { return date; }
-    
-    // --- NUEVO GETTER (Spring Boot lo usará para crear el JSON "itemsCount") ---
     public int getItemsCount() { return itemsCount; }
 }

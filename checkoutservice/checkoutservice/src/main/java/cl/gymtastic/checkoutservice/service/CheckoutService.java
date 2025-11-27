@@ -95,8 +95,34 @@ public class CheckoutService {
         List<PurchaseOrder> orders = purchaseOrderRepository.findByUserEmailOrderByDateDesc(email);
         
         return orders.stream()
-                // Agregamos o.getItemsCount() al final
-                .map(o -> new OrderDto(o.getId(), o.getDescription(), o.getTotalAmount(), o.getDate(), o.getItemsCount()))
+                .map(o -> new OrderDto(
+                    o.getId(), 
+                    o.getUserEmail(), // <--- Pasamos el email
+                    o.getDescription(), 
+                    o.getTotalAmount(), 
+                    o.getDate(), 
+                    o.getItemsCount()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    public List<OrderDto> getAllOrders() {
+        // findAll() viene por defecto en JpaRepository
+        List<PurchaseOrder> orders = purchaseOrderRepository.findAll();
+        
+        // Ordenamos por fecha descendente (lo más nuevo primero)
+        // Nota: Si quieres que la BD ordene, podrías crear findAllByOrderByDateDesc() en el repo
+        orders.sort((a, b) -> b.getDate().compareTo(a.getDate()));
+
+        return orders.stream()
+                .map(o -> new OrderDto(
+                    o.getId(), 
+                    o.getUserEmail(),
+                    o.getDescription(), 
+                    o.getTotalAmount(), 
+                    o.getDate(), 
+                    o.getItemsCount()
+                ))
                 .collect(Collectors.toList());
     }
     
