@@ -1,14 +1,12 @@
 package cl.gymtastic.userservice.config;
 
+import cl.gymtastic.userservice.security.JwtTokenFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
-
-import cl.gymtastic.userservice.security.JwtTokenFilter;
-import org.springframework.http.HttpMethod;
-
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -19,15 +17,27 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-            // Registramos el filtro ANTES del filtro estándar de autenticación
             .addFilterBefore(new JwtTokenFilter(), UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
-                // Rutas públicas
-                .requestMatchers("/login", "/register", "/swagger-ui/**").permitAll()
-                // Rutas protegidas
-                .requestMatchers(HttpMethod.GET, "/users").hasRole("Admin") // Solo Admin ve todos
-                .requestMatchers(HttpMethod.DELETE, "/users/**").hasRole("Admin") // Solo Admin borra
-                .anyRequest().authenticated() // Todo lo demás requiere login
+                // --- RUTAS PÚBLICAS ---
+                .requestMatchers(
+                    "/login", 
+                    "/register", 
+                    "/swagger-ui/**", 
+                    "/v3/api-docs/**",
+                    // ¡ESTA ES LA CLAVE! Permitir que login-service consulte datos:
+                    "/users/by-email",
+                    // Permitir que checkout-service consulte datos (opcional si no implementas token relay):
+                    "/users/**" 
+                ).permitAll()
+
+                // --- RUTAS ADMIN ---
+                .requestMatchers(HttpMethod.GET, "/users").hasRole("Admin") 
+                .requestMatchers(HttpMethod.DELETE, "/users/**").hasRole("Admin")
+                .requestMatchers(HttpMethod.PUT, "/users/*/role").hasRole("Admin")
+
+                // --- RESTO AUTENTICADO ---
+                .anyRequest().authenticated()
             );
         
         return http.build();
