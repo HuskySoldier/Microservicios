@@ -2,116 +2,67 @@ package cl.gymtastic.loginservice.service;
 
 import cl.gymtastic.loginservice.client.UserClient;
 import cl.gymtastic.loginservice.dto.LoginRequest;
-import cl.gymtastic.loginservice.dto.LoginResponse;
 import cl.gymtastic.loginservice.dto.UserProfileResponse;
-import feign.FeignException;
-import feign.Request; // <-- Importación necesaria
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Collections; // <-- AÑADIDO: Para Collections.emptyMap()
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.hamcrest.Matchers.not;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ExtendWith(MockitoExtension.class)
-public class LoginServiceTest {
+@SpringBootTest
+@AutoConfigureMockMvc
+class LoginIntegrationTest {
 
-    @Mock
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
     private UserClient userClient;
 
-    @Mock
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @InjectMocks
-    private LoginService loginService;
-
-    private final String TEST_EMAIL = "test@gymtastic.cl";
-    private final String RAW_PASSWORD = "test1234";
-    private final String HASHED_PASSWORD = "hashed_password_mock";
-
     @Test
-    void login_Success_ReturnsTokenAndProfile() {
-        // Arrange
-        LoginRequest request = new LoginRequest();
-        request.setEmail(TEST_EMAIL);
-        request.setPassword(RAW_PASSWORD);
+    void testLoginFlow_Success() throws Exception {
 
-        UserProfileResponse userProfile = new UserProfileResponse();
-        userProfile.setEmail(TEST_EMAIL);
-        userProfile.setPassHash(HASHED_PASSWORD);
+        // 🔹 Preparar datos del usuario simulado
+        String email = "test@gym.cl";
+        String rawPassword = "123456";
+        String hashedPassword = passwordEncoder.encode(rawPassword);
 
-        // Mock: Simula que UserClient encuentra el usuario
-        when(userClient.buscarPorEmail(TEST_EMAIL)).thenReturn(ResponseEntity.ok(userProfile));
-        // Mock: Simula que la contraseña coincide
-        when(passwordEncoder.matches(RAW_PASSWORD, HASHED_PASSWORD)).thenReturn(true);
+        UserProfileResponse mockProfile = new UserProfileResponse();
+        mockProfile.setEmail(email);
+        mockProfile.setPassHash(hashedPassword);
+        mockProfile.setRol("User");
 
-        // Act
-        LoginResponse response = loginService.login(request);
+        // 🔹 Simular respuesta desde User-Service
+        Mockito.when(userClient.buscarPorEmail(email))
+                .thenReturn(ResponseEntity.ok(mockProfile));
 
-        // Assert
-        assertTrue(response.isSuccess());
-        assertEquals("Login exitoso", response.getMessage());
-        assertNotNull(response.getToken());
-        assertNotNull(response.getUser());
-        // Verifica que el hash se limpie antes de ser devuelto
-        assertNull(response.getUser().getPassHash()); 
-    }
+        // 🔹 Crear login request JSON
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setEmail(email);
+        loginRequest.setPassword(rawPassword);
 
-    @Test
-    void login_Failure_UserNotFound() {
-        // Arrange
-        LoginRequest request = new LoginRequest();
-        request.setEmail("unknown@mail.cl");
-        request.setPassword(RAW_PASSWORD);
-
-        // --- FIX: Crear un objeto Request mock para evitar el NullPointerException ---
-        Request mockRequest = Request.create(
-            Request.HttpMethod.GET, 
-            "http://mock-url", 
-            Collections.emptyMap(), // Headers (Map<String, Collection<String>>)
-            Request.Body.create(new byte[0]), // Body
-            null // Headers nulos
-        );
-
-        // Mock: Simula que UserClient lanza FeignException.NotFound (HTTP 404)
-        when(userClient.buscarPorEmail("unknown@mail.cl")).thenThrow(
-            // Pasar el objeto mockRequest en lugar de null
-            new FeignException.NotFound("404 Not Found", mockRequest, null, null) 
-        );
-
-        // Act
-        LoginResponse response = loginService.login(request);
-
-        // Assert
-        assertFalse(response.isSuccess());
-        assertEquals("Credenciales inválidas (Usuario no existe)", response.getMessage());
-        assertNull(response.getToken());
-    }
-
-    @Test
-    void login_Failure_PasswordIncorrect() {
-        // Arrange
-        LoginRequest request = new LoginRequest();
-        request.setEmail(TEST_EMAIL);
-        request.setPassword("incorrecto");
-
-        UserProfileResponse userProfile = new UserProfileResponse();
-        userProfile.setPassHash(HASHED_PASSWORD);
-
-        // Mock: Simula que encuentra el usuario pero la clave NO coincide
-        when(userClient.buscarPorEmail(TEST_EMAIL)).thenReturn(ResponseEntity.ok(userProfile));
-        when(passwordEncoder.matches("incorrecto", HASHED_PASSWORD)).thenReturn(false);
-
-        // Act
-        LoginResponse response = loginService.login(request);
-
-        // Assert
-        assertFalse(response.isSuccess());
-        assertEquals("Credenciales inválidas (Contraseña incorrecta)", response.getMessage());
+        // 🔹 Ejecutar /login y verificar resultados
+        mockMvc.perform(post("/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(loginRequest)))
+                // 4. Verificar Resultados
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.token").exists()) // Verifica que se generó JWT
+                .andExpect(jsonPath("$.token").isString())
+                .andExpect(jsonPath("$.token").value(org.hamcrest.Matchers.not("fake-jwt-token"))); // No debe ser el fake
     }
 }

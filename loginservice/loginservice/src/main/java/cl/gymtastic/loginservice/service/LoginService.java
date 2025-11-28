@@ -4,6 +4,7 @@ import cl.gymtastic.loginservice.client.UserClient;
 import cl.gymtastic.loginservice.dto.LoginRequest;
 import cl.gymtastic.loginservice.dto.LoginResponse;
 import cl.gymtastic.loginservice.dto.UserProfileResponse;
+import cl.gymtastic.loginservice.util.JwtUtil;
 import cl.gymtastic.loginservice.dto.ResetPasswordRequest; // <--- IMPORTANTE: Usar este import
 
 import feign.FeignException;
@@ -16,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
+
 @Service
 @Validated
 public class LoginService {
@@ -25,6 +27,9 @@ public class LoginService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtUtil jwtUtil; // <--- Inyectar Utilidad
 
     public void requestReset(String email) {
         try {
@@ -80,14 +85,16 @@ public class LoginService {
 
         // 2. Verificar la contraseña
         boolean passwordMatch = passwordEncoder.matches(request.getPassword().trim(), user.getPassHash());
-        System.out.println("5. ¿Coinciden las contraseñas?: " + passwordMatch);
-        System.out.println("-------------------");
 
         if (passwordMatch) {
             user.setPassHash(null); 
+            
+            // --- CAMBIO AQUÍ: GENERAR TOKEN REAL ---
+            String token = jwtUtil.generateToken(user.getEmail(), user.getRol());
+            
             return new LoginResponse(
                 true,
-                "fake-jwt-token-" + user.getEmail(),
+                token, // <--- Token JWT real
                 "Login exitoso",
                 user
             );
@@ -95,7 +102,4 @@ public class LoginService {
             return new LoginResponse(false, null, "Credenciales inválidas (Contraseña incorrecta)", null);
         }
     }
-
-    // --- BORRAR LA CLASE INTERNA 'ResetPasswordRequest' DE AQUÍ ---
-    // (Ya existe una clase igual y correcta en el paquete .dto)
 }
