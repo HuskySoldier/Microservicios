@@ -18,16 +18,26 @@ public class DataLoader {
             if (repository.count() == 0) {
                 System.out.println("Poblando base de datos con productos iniciales...");
                 
-                String poleraImgUri = "android.resource://cl.gymtastic.app/drawable/polera_gym";
-                String botellaImgUri = "android.resource://cl.gymtastic.app/drawable/botella_agua";
+                // --- RUTAS A TUS IMÁGENES LOCALES (en carpeta public/imagenes) ---
+                String imgMensual = "/imagenes/Mensual.png";
+                String imgTrimestral = "/imagenes/Trimestral.png";
+                String imgPolera = "/imagenes/Polera.png";
+                String imgProteina = "/imagenes/Proteina.png"; 
+                String imgMancuernas = "/imagenes/Mancuernas.jpg";
+                String imgPesaRusa = "/imagenes/PesaRusa.png";
 
                 repository.saveAll(List.of(
-                    Product.builder().nombre("Plan Mensual").precio(19990.0).tipo("plan").stock(999).build(),
-                    Product.builder().nombre("Plan Trimestral").precio(54990.0).tipo("plan").stock(999).build(),
-                    Product.builder().nombre("Polera Gym").precio(12990.0).tipo("merch").stock(90).img(poleraImgUri).descripcion("Polera oficial de polyester").build(),
-                    Product.builder().nombre("Botella").precio(6990.0).tipo("merch").stock(80).img(botellaImgUri).descripcion("Botella de agua 1L").build()
+                    // PLANES
+                    Product.builder().nombre("Plan Mensual").precio(19990.0).tipo("plan").stock(999).img(imgMensual).descripcion("Acceso total por 1 mes").build(),
+                    Product.builder().nombre("Plan Trimestral").precio(54990.0).tipo("plan").stock(999).img(imgTrimestral).descripcion("Ahorra con el plan de 3 meses").build(),
+                    
+                    // PRODUCTOS (MERCH)
+                    Product.builder().nombre("Polera Gymtastic").precio(12990.0).tipo("merch").stock(90).img(imgPolera).descripcion("[Ropa] Polera oficial de entrenamiento respirable").build(),
+                    Product.builder().nombre("Whey Protein").precio(45990.0).tipo("merch").stock(50).img(imgProteina).descripcion("[Suplementos] Proteína de suero de leche 1kg").build(),
+                    Product.builder().nombre("Mancuernas 5kg").precio(15990.0).tipo("merch").stock(20).img(imgMancuernas).descripcion("[Equipamiento] Par de mancuernas hexagonales").build(),
+                    Product.builder().nombre("Pesa Rusa 12kg").precio(22990.0).tipo("merch").stock(15).img(imgPesaRusa).descripcion("[Equipamiento] Kettlebell de hierro fundido").build()
                 ));
-                System.out.println("--> Base de datos poblada con Productos.");
+                System.out.println("--> Base de datos poblada con Productos e Imágenes.");
             }
         };
     }

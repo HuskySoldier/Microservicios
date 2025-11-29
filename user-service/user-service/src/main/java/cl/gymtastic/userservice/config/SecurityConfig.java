@@ -6,12 +6,21 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // <--- IMPORTANTE
+import org.springframework.security.crypto.password.PasswordEncoder;     // <--- IMPORTANTE
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    // --- ESTE ES EL BEAN QUE FALTABA Y CAUSABA EL ERROR ---
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+    // -----------------------------------------------------
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -25,16 +34,15 @@ public class SecurityConfig {
                     "/register", 
                     "/swagger-ui/**", 
                     "/v3/api-docs/**",
-                    // ¡ESTA ES LA CLAVE! Permitir que login-service consulte datos:
+                    // IMPORTANTE: Permitir que login-service consulte el usuario por email
                     "/users/by-email",
-                    // Permitir que checkout-service consulte datos (opcional si no implementas token relay):
                     "/users/**" 
                 ).permitAll()
 
                 // --- RUTAS ADMIN ---
-                .requestMatchers(HttpMethod.GET, "/users").hasRole("Admin") 
-                .requestMatchers(HttpMethod.DELETE, "/users/**").hasRole("Admin")
-                .requestMatchers(HttpMethod.PUT, "/users/*/role").hasRole("Admin")
+                .requestMatchers(HttpMethod.GET, "/users").hasRole("admin") 
+                .requestMatchers(HttpMethod.DELETE, "/users/**").hasRole("admin")
+                .requestMatchers(HttpMethod.PUT, "/users/*/role").hasRole("admin")
 
                 // --- RESTO AUTENTICADO ---
                 .anyRequest().authenticated()
